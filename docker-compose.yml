@@ -1,0 +1,214 @@
+# CCAG Delivery — Unified Docker Compose
+# Deploy via Coolify PaaS on intelligencehub.cloud
+# Flat services/ structure — no ../ escapes in build contexts
+
+services:
+  # ── Data layer ──────────────────────────────────────────────────────────────
+  postgres:
+    build:
+      context: ./services/postgres
+      dockerfile: Dockerfile
+    container_name: ccag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ccag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-carbon_platform}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ccag} -d ${POSTGRES_DB:-carbon_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - ccag-net
+
+  redis:
+    image: redis:7-alpine@sha256:ea9307b2e563995512341701a505809681262135a4f7561ece4b5281c94c9c12
+    container_name: ccag-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ccag-net
+
+  # ── Vector store (internal only) ────────────────────────────────────────────
+  vector-store:
+    build:
+      context: ./services/vector-store
+      dockerfile: Dockerfile
+    container_name: ccag-vector-store
+    restart: unless-stopped
+    environment:
+      - CHROMA_PERSIST_DIR=/data/chroma
+    volumes:
+      - vector_data:/data/chroma
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ccag-net
+
+  # ── Backend: Orchestrator ───────────────────────────────────────────────────
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    container_name: ccag-orchestrator
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${ORCHESTRATOR_DATABASE_URL:-postgresql+asyncpg://ccag:changeme@postgres:5432/carbon_platform}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_FRONTEND_API_URL=${CLERK_FRONTEND_API_URL}
+      - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
+      - CLERK_JWT_ISSUER=${CLERK_JWT_ISSUER}
+      - RAG_FIXED_TENANT_ID=${RAG_FIXED_TENANT_ID:-default}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - DOCKER_ENABLED=${DOCKER_ENABLED:-false}
+      - AGENT_API_URL=${AGENT_API_URL:-http://adapter:8000}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://adapter:8000}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
+      - AUTO_CREATE_TABLES=${AUTO_CREATE_TABLES:-false}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ccag-net
+
+  # ── Backend: Adapter (inference proxy) ──────────────────────────────────────
+  adapter:
+    build:
+      context: ./services/adapter
+      dockerfile: Dockerfile
+    container_name: ccag-adapter
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    environment:
+      - DATABASE_URL=${ADAPTER_DATABASE_URL:-postgresql+asyncpg://ccag:changeme@postgres:5432/carbon_platform}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
+      - DEFAULT_LIFETIME_HOURS=${DEFAULT_LIFETIME_HOURS:-24}
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ccag-net
+
+  # ── Frontend: Intelligence Hub Dashboard ────────────────────────────────────
+  dashboard:
+    build:
+      context: ./services/dashboard
+      dockerfile: Dockerfile
+    container_name: ccag-dashboard
+    restart: unless-stopped
+    depends_on:
+      - orchestrator
+      - adapter
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
+      - ADAPTER_URL=${ADAPTER_URL:-http://adapter:8000}
+      - CONTRACT_HUB_URL=${CONTRACT_HUB_URL:-http://contract-hub:3000}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ccag-net
+
+  # ── Frontend: Contract Hub (full-spec LawVu replacement) ────────────────────
+  contract-hub:
+    build:
+      context: ./services/contract-hub
+      dockerfile: Dockerfile
+    container_name: ccag-contract-hub
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - DATABASE_URL=${CONTRACT_HUB_DATABASE_URL:-postgresql://ccag:changeme@postgres:5432/contracthub}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
+      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - RAG_GATEWAY_URL=${RAG_GATEWAY_URL:-http://orchestrator:8000}
+      - VECTOR_STORE_URL=${VECTOR_STORE_URL:-http://vector-store:8000}
+      - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY:-local}
+      - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY:-local}
+    ports:
+      - "3002:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health 2>/dev/null | grep -q ok || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ccag-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  vector_data:
+
+networks:
+  ccag-net:
+    driver: bridge

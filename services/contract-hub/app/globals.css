@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark mode defaults (Contract Hub Carbon Void) */
+  --background: #0a0a0b;
+  --surface: #131315;
+  --deep: #1a1a1d;
+  --elevated: #1f1f23;
+  --border: #2a2a2e;
+  --border-strong: #3a3a3e;
+
+  /* Accent — Contract Hub Emerald */
+  --accent: #10B981;
+  --accent-hover: #059669;
+  --accent-dim: rgba(16, 185, 129, 0.1);
+  --accent-glow: rgba(16, 185, 129, 0.15);
+
+  /* Text Colors */
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0ab;
+  --text-tertiary: #6b6b78;
+  --text-muted: #4a4a52;
+
+  /* Semantic Colors */
+  --status-success: #4ade80;
+  --status-warning: #facc15;
+  --status-error: #f87171;
+  --status-info: #6ba8e8;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Scrollbar */
+  --scrollbar-track: #1a1a1d;
+  --scrollbar-thumb: #3a3a3e;
+  --scrollbar-thumb-hover: #4a4a52;
+
+  /* Selection */
+  --selection-bg: rgba(16, 185, 129, 0.2);
+  --selection-color: #f0f0f5;
+}
+
+[data-theme="light"] {
+  --background: #f8f9fb;
+  --surface: #ffffff;
+  --deep: #e9ecef;
+  --elevated: #f1f3f5;
+  --border: #dee2e6;
+  --border-strong: #ced4da;
+
+  --accent: #059669;
+  --accent-hover: #047857;
+  --accent-dim: rgba(5, 150, 105, 0.08);
+  --accent-glow: rgba(5, 150, 105, 0.12);
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #495057;
+  --text-tertiary: #868e96;
+  --text-muted: #adb5bd;
+
+  --status-success: #2b8a3e;
+  --status-warning: #e67700;
+  --status-error: #c92a2a;
+  --status-info: #1864ab;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+
+  --scrollbar-track: #e9ecef;
+  --scrollbar-thumb: #ced4da;
+  --scrollbar-thumb-hover: #adb5bd;
+
+  --selection-bg: rgba(5, 150, 105, 0.12);
+  --selection-color: #1a1a2e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-color);
+}
+
+/* Skeletal loader shimmer */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--deep) 25%, var(--elevated) 50%, var(--deep) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* Staggered list mount animation */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-item {
+  animation: fadeSlideIn 800ms cubic-bezier(0.32,0.72,0,1) both;
+  animation-delay: calc(var(--index, 0) * 60ms);
+}
+
+/* Block-level stagger for section reveals */
+@keyframes sectionReveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-section {
+  animation: sectionReveal 600ms cubic-bezier(0.32,0.72,0,1) both;
+  animation-delay: calc(var(--section-delay, 0) * 120ms);
+}
+
+/* Ambient float for subtle depth */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+.float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Utility: Carbon Card */
+.carbon-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.carbon-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Utility: Carbon Input */
+.carbon-input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.carbon-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  outline: none;
+}
+
+.carbon-input::placeholder {
+  color: var(--text-tertiary);
+}

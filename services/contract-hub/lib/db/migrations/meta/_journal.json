@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1776230900680,
+      "tag": "0000_violet_slipstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776567600000,
+      "tag": "0001_document_storage_fallback",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748736000000,
+      "tag": "0002_anthropic_oauth",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776610398999,
+      "tag": "0003_glossy_fixer",
+      "breakpoints": true
+    }
+  ]
+}

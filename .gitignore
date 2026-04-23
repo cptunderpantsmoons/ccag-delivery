@@ -1,0 +1,65 @@
+# ── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# ── Secrets ──────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# ── Node.js ──────────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Docker / Infra ───────────────────────────────────────────────────────────
+*.log
+postgres_data/
+redis_data/
+vector_data/
+chroma_data/
+
+# ── Test / CI artifacts ──────────────────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.bak
+*.orig
+*.rej
