@@ -1,0 +1,23 @@
+services:
+  ccag-host:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Keep this in sync with apps/orchestrator/package.json if you want a pinned release.
+        CCAG_ORCHESTRATOR_VERSION: 0.11.22
+    ports:
+      - "8787:8787"
+    environment:
+      # Set these explicitly for stable sharing.
+      # CCAG_TOKEN: "..."
+      # CCAG_HOST_TOKEN: "..."
+      # Optional: CCAG_APPROVAL_MODE: "auto"
+      # Optional: CCAG_APPROVAL_TIMEOUT_MS: "30000"
+      CCAG_DATA_DIR: /data/ccag-orchestrator
+      CCAG_SIDECAR_DIR: /data/sidecars
+    volumes:
+      # Mount an existing project/workspace here.
+      - ./workspace:/workspace
+      # Persistent host data (OpenCode caches, server config, tokens).
+      - ./data:/data

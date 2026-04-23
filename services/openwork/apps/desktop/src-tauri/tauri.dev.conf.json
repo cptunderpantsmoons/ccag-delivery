@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CCAG Dev",
+  "identifier": "com.differentai.ccag.dev",
+  "bundle": {
+    "icon": [
+      "icons/dev/32x32.png",
+      "icons/dev/128x128.png",
+      "icons/dev/128x128@2x.png",
+      "icons/icon-dev.icns"
+    ],
+    "macOS": {
+      "bundleName": "CCAG - Dev",
+      "infoPlist": "./Info.dev.plist"
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "CCAG - Dev",
+        "width": 1180,
+        "height": 820,
+        "resizable": true
+      }
+    ]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "ccag-dev"
+        ]
+      }
+    }
+  }
+}
