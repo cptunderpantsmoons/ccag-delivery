@@ -79,7 +79,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=${ORCHESTRATOR_DATABASE_URL:-postgresql+asyncpg://ccag:changeme@postgres:5432/carbon_platform}
+      - DATABASE_URL=${ORCHESTRATOR_DATABASE_URL:-postgresql+asyncpg://ccag:${POSTGRES_PASSWORD}@postgres:5432/carbon_platform}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
@@ -120,7 +120,7 @@ services:
       orchestrator:
         condition: service_started
     environment:
-      - DATABASE_URL=${ADAPTER_DATABASE_URL:-postgresql+asyncpg://ccag:changeme@postgres:5432/carbon_platform}
+      - DATABASE_URL=${ADAPTER_DATABASE_URL:-postgresql+asyncpg://ccag:${POSTGRES_PASSWORD}@postgres:5432/carbon_platform}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - LLM_API_KEY=${LLM_API_KEY}
@@ -207,51 +207,51 @@ services:
   #     - ccag-net
 
   # ── OpenWork / CCAG Workspace — OpenCode Engine ─────────────────────────────
-  ccag-workspace:
-    build:
-      context: ./services/openwork
-      dockerfile: Dockerfile.server-v2
-    container_name: ccag-workspace
-    restart: unless-stopped
-    environment:
-      - CCAG_DATA_DIR=/data/ccag-workspace
-      - CCAG_APPROVAL_MODE=${CCAG_APPROVAL_MODE:-manual}
-      - CCAG_TOKEN=${CCAG_TOKEN}
-      - CCAG_HOST_TOKEN=${CCAG_HOST_TOKEN}
-    volumes:
-      - ccag_workspace_data:/data
-    ports:
-      - "3100:3100"
-    healthcheck:
-      test: ["CMD-SHELL", "bun -e 'fetch(\"http://localhost:3100/health\").then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))'"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-    networks:
-      - ccag-net
+  # ccag-workspace:
+  #   build:
+  #     context: ./services/openwork
+  #     dockerfile: Dockerfile.server-v2
+  #   container_name: ccag-workspace
+  #   restart: unless-stopped
+  #   environment:
+  #     - CCAG_DATA_DIR=/data/ccag-workspace
+  #     - CCAG_APPROVAL_MODE=${CCAG_APPROVAL_MODE:-manual}
+  #     - CCAG_TOKEN=${CCAG_TOKEN}
+  #     - CCAG_HOST_TOKEN=${CCAG_HOST_TOKEN}
+  #   volumes:
+  #     - ccag_workspace_data:/data
+  #   ports:
+  #     - "3100:3100"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "bun -e 'fetch(\"http://localhost:3100/health\").then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))'"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 15s
+  #   networks:
+  #     - ccag-net
 
   # ── OpenWork / CCAG Workspace UI — Agent Workspace Frontend ─────────────────
-  ccag-workspace-ui:
-    build:
-      context: ./services/openwork
-      dockerfile: Dockerfile.app
-    container_name: ccag-workspace-ui
-    restart: unless-stopped
-    depends_on:
-      - ccag-workspace
-    environment:
-      - CCAG_PUBLIC_HOST=${CCAG_PUBLIC_HOST:-localhost}
-    ports:
-      - "3003:3000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - ccag-net
+  # ccag-workspace-ui:
+  #   build:
+  #     context: ./services/openwork
+  #     dockerfile: Dockerfile.app
+  #   container_name: ccag-workspace-ui
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - ccag-workspace
+  #   environment:
+  #     - CCAG_PUBLIC_HOST=${CCAG_PUBLIC_HOST:-localhost}
+  #   ports:
+  #     - "3003:3000"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   networks:
+  #     - ccag-net
 
 volumes:
   postgres_data:
