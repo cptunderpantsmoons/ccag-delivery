@@ -12,6 +12,9 @@ RUN apk add --no-cache libc6-compat python3 make g++
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
+# Create public dir in builder so it can be copied to runner (Next.js may not create it)
+RUN mkdir -p /app/public
+
 # ── Stage 2: builder ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
