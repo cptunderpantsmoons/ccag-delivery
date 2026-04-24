@@ -2,6 +2,7 @@
 
 from typing import List, Dict, Optional
 import chromadb
+import os
 from fastembed import TextEmbedding
 from app.config import settings
 
@@ -12,13 +13,20 @@ class VectorStore:
     def __init__(self):
         """Initialize ChromaDB HTTP client and embedding model."""
         # Initialize ChromaDB HTTP client
-        self.client = chromadb.HttpClient(
-            host=settings.chroma_host,
-            port=settings.chroma_port,
-            ssl=False,
-            tenant=settings.chroma_tenant,
-            database=settings.chroma_database,
-        )
+        # Use PersistentClient if running in embedded mode (no external Chroma server)
+        persist_dir = os.getenv("CHROMA_PERSIST_DIR", "/data/chroma")
+        if os.path.exists(persist_dir):
+            print(f"Using PersistentClient with persist_dir: {persist_dir}")
+            self.client = chromadb.PersistentClient(path=persist_dir)
+        else:
+            print(f"Using HttpClient connecting to {settings.chroma_host}:{settings.chroma_port}")
+            self.client = chromadb.HttpClient(
+                host=settings.chroma_host,
+                port=settings.chroma_port,
+                ssl=False,
+                tenant=settings.chroma_tenant,
+                database=settings.chroma_database,
+            )
 
         # Initialize embedding model (fastembed / ONNX — no PyTorch required)
         print(f"Loading embedding model: {settings.embedding_model}")
