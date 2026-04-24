@@ -19,6 +19,9 @@ ENV NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 # Copy source
 COPY . .
 
+# Ensure public dir exists before build (avoids missing-dir COPY errors in runner stage)
+RUN mkdir -p /app/public
+
 # Build Next.js application
 RUN npm run build
 
