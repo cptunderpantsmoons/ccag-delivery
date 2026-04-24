@@ -10,28 +10,39 @@ WORKDIR /app
 # Install pnpm globally (node:20 has npm)
 RUN npm install -g pnpm@10.27.0
 
-# Copy workspace root config
+# Copy workspace root config first (before patches, so patches can reference workspace)
 COPY package.json pnpm-workspace.yaml turbo.json .npmrc ./
 
 # Copy patches directory (pnpm patchedDependencies requires it at workspace root)
 COPY patches ./patches/
 
-# Copy ALL workspace packages (needed for pnpm to resolve workspace: links)
-COPY packages/types/package.json packages/types/tsconfig.json packages/types/src ./packages/types/src/
+# Copy package.json files for ALL workspace packages (pnpm needs these to detect workspace packages)
+# Copy types package
+COPY packages/types/package.json ./packages/types/
+COPY packages/types/tsconfig.json ./packages/types/
 COPY packages/types/tsup.config.ts ./packages/types/
-COPY packages/ui/package.json packages/ui/tsconfig.react.json packages/ui/tsconfig.solid.json packages/ui/tsup.config.react.ts packages/ui/tsup.config.solid.ts ./packages/ui/
+COPY packages/types/src ./packages/types/src/
+
+# Copy ui package
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/ui/tsconfig.react.json ./packages/ui/
+COPY packages/ui/tsconfig.solid.json ./packages/ui/
+COPY packages/ui/tsup.config.react.ts ./packages/ui/
+COPY packages/ui/tsup.config.solid.ts ./packages/ui/
 COPY packages/ui/src ./packages/ui/src
 COPY packages/ui/README.md ./packages/ui/
 
-# Copy app (needs workspace deps above to resolve)
-COPY apps/app/package.json apps/app/vite.config.ts apps/app/tsconfig.json apps/app/tailwind.config.ts apps/app/index.html ./apps/app/
+# Copy app
+COPY apps/app/package.json ./apps/app/
+COPY apps/app/vite.config.ts ./apps/app/
+COPY apps/app/tsconfig.json ./apps/app/
+COPY apps/app/tailwind.config.ts ./apps/app/
+COPY apps/app/index.html ./apps/app/
 COPY apps/app/src ./apps/app/src
 COPY apps/app/public ./apps/app/public
 COPY apps/app/scripts ./apps/app/scripts
 
 # Install workspace dependencies (resolves workspace: links)
-# Note: --frozen-lockfile requires pnpm-lock.yaml AND all patch files to exist.
-# The @solidjs/router patch is a no-op placeholder — install without frozen lockfile.
 RUN pnpm install
 
 # Build workspace packages (required by the app)
