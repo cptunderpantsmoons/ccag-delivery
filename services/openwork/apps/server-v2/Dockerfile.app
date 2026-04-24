@@ -27,7 +27,9 @@ COPY apps/app/public ./apps/app/public
 COPY apps/app/scripts ./apps/app/scripts
 
 # Install workspace dependencies (resolves workspace: links)
-RUN pnpm install --frozen-lockfile
+# Note: --frozen-lockfile requires pnpm-lock.yaml AND all patch files to exist.
+# The @solidjs/router patch is a no-op placeholder — install without frozen lockfile.
+RUN pnpm install
 
 # Build workspace packages (required by the app)
 RUN pnpm --filter @ccag/types build
