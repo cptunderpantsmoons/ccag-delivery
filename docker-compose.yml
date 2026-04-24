@@ -97,7 +97,7 @@ services:
       - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
       - AUTO_CREATE_TABLES=${AUTO_CREATE_TABLES:-false}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8002:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
