@@ -10,20 +10,20 @@ WORKDIR /app
 # Install pnpm globally (node:20 has npm)
 RUN npm install -g pnpm@10.27.0
 
-# Copy workspace root config first (before patches, so patches can reference workspace)
+# Copy workspace root config
 COPY package.json pnpm-workspace.yaml turbo.json .npmrc ./
 
-# Copy patches directory (pnpm patchedDependencies requires it at workspace root)
-COPY patches ./patches/
+# Strip patchedDependencies from package.json before install.
+# The patch targets @solidjs/router which is not in this workspace.
+# pnpm v10+ errors when a patch is declared but not applied.
+RUN node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); delete p.pnpm?.patchedDependencies; fs.writeFileSync('package.json', JSON.stringify(p,null,2));"
 
-# Copy package.json files for ALL workspace packages (pnpm needs these to detect workspace packages)
-# Copy types package
+# Copy package.json for each workspace package (pnpm needs these to detect workspace packages)
 COPY packages/types/package.json ./packages/types/
 COPY packages/types/tsconfig.json ./packages/types/
 COPY packages/types/tsup.config.ts ./packages/types/
 COPY packages/types/src ./packages/types/src/
 
-# Copy ui package
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/ui/tsconfig.react.json ./packages/ui/
 COPY packages/ui/tsconfig.solid.json ./packages/ui/
@@ -32,7 +32,6 @@ COPY packages/ui/tsup.config.solid.ts ./packages/ui/
 COPY packages/ui/src ./packages/ui/src
 COPY packages/ui/README.md ./packages/ui/
 
-# Copy app
 COPY apps/app/package.json ./apps/app/
 COPY apps/app/vite.config.ts ./apps/app/
 COPY apps/app/tsconfig.json ./apps/app/
