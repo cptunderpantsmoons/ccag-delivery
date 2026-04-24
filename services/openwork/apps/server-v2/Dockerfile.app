@@ -13,6 +13,9 @@ RUN npm install -g pnpm@10.27.0
 # Copy workspace root config
 COPY package.json pnpm-workspace.yaml turbo.json .npmrc ./
 
+# Copy patches directory (pnpm patchedDependencies requires it at workspace root)
+COPY patches ./patches/
+
 # Copy ALL workspace packages (needed for pnpm to resolve workspace: links)
 COPY packages/types/package.json packages/types/tsconfig.json packages/types/src ./packages/types/src/
 COPY packages/types/tsup.config.ts ./packages/types/
