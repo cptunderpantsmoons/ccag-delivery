@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { AuthUserButton } from "../auth-user-button";
 import { Menu, Search } from "lucide-react";
 import { ThemeToggle } from "../theme-toggle";
 
@@ -44,13 +44,7 @@ export function TopBar({
         </div>
         <div className="h-6 w-px bg-[var(--border)] hidden sm:block" />
         <ThemeToggle compact />
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-8 w-8 rounded-xl border border-[var(--border)]",
-            },
-          }}
-        />
+        <AuthUserButton
       </div>
     </header>
   );
