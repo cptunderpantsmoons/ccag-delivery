@@ -7,17 +7,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   images: {
-    unoptimized: false,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**.sharepoint.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.graph.microsoft.com",
-      },
-    ],
+    unoptimized: true,
   },
   async headers() {
     return [
