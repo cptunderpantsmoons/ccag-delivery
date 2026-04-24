@@ -78,7 +78,6 @@ export default function PDFViewer({ fileUrl, currentPage: externalPage, onPageCh
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        // @ts-expect-error: types expect 'canvas' property but runtime API uses canvasContext
         await page.render({
           canvasContext: context,
           viewport,

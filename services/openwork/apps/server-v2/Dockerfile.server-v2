@@ -1,0 +1,43 @@
+# CCAG Server V2 — OpenCode Engine API
+# Multi-stage Bun build for the pnpm monorepo
+# Stage 1: install deps
+FROM oven/bun:1.2-slim AS deps
+
+WORKDIR /app
+
+# Copy root workspace files (needed for pnpm workspace resolution)
+COPY package.json pnpm-workspace.yaml ./
+COPY apps/server-v2/package.json ./apps/server-v2/
+COPY packages/types/package.json ./packages/types/
+
+# Install only production deps for server-v2
+RUN bun install --frozen-lockfile
+
+# Stage 2: build (if needed)
+FROM oven/bun:1.2-slim AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/server-v2/node_modules ./apps/server-v2/node_modules
+COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
+COPY . .
+RUN cd apps/server-v2 && bun run build:bin --outdir dist/bin --filename ccag-server-v2 || true
+
+# Stage 3: production runner
+FROM oven/bun:1.2-slim
+WORKDIR /app
+
+# Copy server-v2 app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/server-v2 ./apps/server-v2
+
+# Non-root user for production
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 3100
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD bun -e "fetch('http://localhost:3100/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" || exit 1
+
+CMD ["bun", "src/cli.ts", "--host", "0.0.0.0", "--port", "3100"]

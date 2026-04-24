@@ -53,7 +53,7 @@ export function ContractPipelinePanel() {
   const archived = contracts.filter((c) => c.status === "archived").length;
 
   const statusBadge = (status: string) => {
-    const map: Record<string, { status: "success" | "warning" | "neutral" | "info"; label: string }> = {
+    const map: Record<string, { status: "success" | "warning" | "neutral" | "info" | "error"; label: string }> = {
       approved: { status: "success", label: "Approved" },
       signed: { status: "success", label: "Signed" },
       active: { status: "success", label: "Active" },

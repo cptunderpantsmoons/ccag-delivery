@@ -10,7 +10,7 @@ export default function HubPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <PageHeader
           title="Intelligence Hub"
-          subtitle="Agent task queue, contract pipeline, and inference health — all in one view."
+          description="Agent task queue, contract pipeline, and inference health — all in one view."
         />
 
         <section className="space-y-3">

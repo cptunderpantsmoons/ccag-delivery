@@ -50,11 +50,8 @@ interface TextChunk {
  * 5. Mark document as indexed
  */
 export const ingestDocument = inngest.createFunction(
-  { 
-    id: 'ingest-document', 
-    name: 'Ingest Document',
-    triggers: [{ event: 'document/uploaded' }]
-  },
+  { id: 'ingest-document', name: 'Ingest Document' },
+  { event: 'document/uploaded' },
   async ({ event, step }) => {
     const { documentId, tenantId } = event.data as { documentId: string; tenantId: string };
 
@@ -252,12 +249,8 @@ export const ingestDocument = inngest.createFunction(
  * - Uses simpler extraction (no page-level)
  */
 export const reindexDocument = inngest.createFunction(
-  { 
-    id: 'document-reindex', 
-    name: 'Document Reindex', 
-    retries: 3,
-    triggers: [{ event: 'document/reindex' }]
-  },
+  { id: 'document-reindex', name: 'Document Reindex' },
+  { event: 'document/reindex', retries: 3 },
   async ({ event, step }) => {
     const { documentId, tenantId } = event.data as { documentId: string; tenantId: string };
 
@@ -440,12 +433,8 @@ export const reindexDocument = inngest.createFunction(
  * Uses concurrency limiting to avoid overwhelming the system
  */
 export const batchIndexDocuments = inngest.createFunction(
-  { 
-    id: 'document-batch-index', 
-    name: 'Document Batch Index', 
-    concurrency: { limit: 2 },
-    triggers: [{ event: 'tenant/batch-reindex' }]
-  },
+  { id: 'document-batch-index', name: 'Document Batch Index' },
+  { event: 'tenant/batch-reindex', concurrency: { limit: 2 } },
   async ({ event, step }) => {
     const { tenantId, documentIds } = event.data as { tenantId: string; documentIds?: string[] };
 
