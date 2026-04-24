@@ -31,9 +31,10 @@ RUN python -c \
 # Copy application code
 COPY app/ ./app/
 
-# Create non-root user
+# Create non-root user and data directory
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
-    && chown -R appuser:appuser /app
+    && mkdir -p /data/chroma \
+    && chown -R appuser:appuser /app /data
 
 USER appuser
 
