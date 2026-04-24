@@ -28,7 +28,7 @@ services:
       - ccag-net
 
   redis:
-    image: redis:7-alpine@sha256:ea9307b2e563995512341701a505809681262135a4f7561ece4b5281c94c9c12
+    image: redis:7-alpine
     container_name: ccag-redis
     restart: unless-stopped
     volumes:
