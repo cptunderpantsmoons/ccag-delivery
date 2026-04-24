@@ -7,7 +7,8 @@ interface SafeProvidersProps {
 
 function hasClerkKey(): boolean {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-  return key.startsWith("pk_") && key.length > 20;
+  // Real keys are substantially longer than "pk_build_placeholder"
+  return key.startsWith("pk_") && key.length > 30;
 }
 
 export function SafeProviders({ children }: SafeProvidersProps) {
