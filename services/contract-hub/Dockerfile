@@ -12,9 +12,6 @@ RUN apk add --no-cache libc6-compat python3 make g++
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
-# Create public dir in builder so it can be copied to runner (Next.js may not create it)
-RUN mkdir -p /app/public
-
 # ── Stage 2: builder ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -34,6 +31,10 @@ ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ENV NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
 ENV NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
+
+# Create /app/public here so it exists when we COPY to the runner stage.
+# Next.js only creates this directory during build if there are assets to serve from it.
+RUN mkdir -p /app/public
 
 RUN npm run build
 
