@@ -23,7 +23,6 @@ from .responses import (
 )
 from .agents import (
     create_chat_agent,
-    create_benchmark_agent,
     create_task_agent,
     execute_agent_run,
 )
@@ -44,7 +43,6 @@ __all__ = [
     "Citation",
     "TokenUsage",
     "create_chat_agent",
-    "create_benchmark_agent",
     "create_task_agent",
     "execute_agent_run",
     "ConversationState",

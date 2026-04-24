@@ -84,7 +84,7 @@ async def scoped_stats(request: ScopedStatsRequest):
         return store.get_stats(where_filter=request.where_filter)
     except Exception as e:
         logger.error("scoped_stats_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to fetch vector stats")
 
 
 @app.post("/add")
@@ -102,7 +102,7 @@ async def add_documents(request: AddDocumentsRequest):
         return {"added": added, "total_submitted": len(texts)}
     except Exception as e:
         logger.error("add_documents_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to add documents")
 
 
 @app.post("/search")
@@ -117,7 +117,7 @@ async def search(request: SearchRequest):
         return results
     except Exception as e:
         logger.error("search_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to search vector store")
 
 
 @app.post("/delete")
@@ -130,7 +130,7 @@ async def delete_documents(request: DeleteRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error("delete_documents_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete documents")
 
 
 @app.post("/clear")
@@ -141,7 +141,7 @@ async def clear():
         return {"message": "Vector store cleared."}
     except Exception as e:
         logger.error("clear_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to clear vector store")
 
 
 if __name__ == "__main__":

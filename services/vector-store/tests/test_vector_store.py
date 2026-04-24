@@ -28,6 +28,19 @@ if "chromadb" not in sys.modules:
     fake_chromadb.HttpClient = _HttpClient
     sys.modules["chromadb"] = fake_chromadb
 
+if "fastembed" not in sys.modules:
+    fake_fastembed = types.ModuleType("fastembed")
+
+    class _TextEmbedding:  # pragma: no cover - import shim for tests only
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def embed(self, texts):
+            return []
+
+    fake_fastembed.TextEmbedding = _TextEmbedding
+    sys.modules["fastembed"] = fake_fastembed
+
 from app.vector_store import VectorStore
 
 

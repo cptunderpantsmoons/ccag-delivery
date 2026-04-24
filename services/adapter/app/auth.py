@@ -59,24 +59,26 @@ async def verify_api_key(
     # Dev-mode check: use the per-process fake store so tests can
     # simulate key rotation (both keys valid → rotate → old key removed).
     # In production the store is always empty, so any non-empty key passes.
-    if api_key in _FAKE_KEY_STORE:
-        logger.info(
-            "authenticated_user_dev_mode",
-            user_id="dummy",
-            email="dummy@example.com",
-            key_hint=api_key[-4:],
-        )
-        return User(
-            id=_FAKE_KEY_STORE[api_key],
-            email="adapter-dev@example.com",
-            display_name="Development User",
-            api_key=api_key,
-            status=UserStatus.ACTIVE,
-            clerk_user_id=None,
-            config=None,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
-        )
+    if _FAKE_KEY_STORE:
+        if api_key in _FAKE_KEY_STORE:
+            logger.info(
+                "authenticated_user_dev_mode",
+                user_id="dummy",
+                email="dummy@example.com",
+                key_hint=api_key[-4:],
+            )
+            return User(
+                id=_FAKE_KEY_STORE[api_key],
+                email="adapter-dev@example.com",
+                display_name="Development User",
+                api_key=api_key,
+                status=UserStatus.ACTIVE,
+                clerk_user_id=None,
+                config=None,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+            )
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
     # Dev fallback: accept any non-empty key (original behaviour)
     logger.info("authenticated_user_dev_fallback", user_id="dummy", email="dummy@example.com")

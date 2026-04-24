@@ -61,7 +61,7 @@ def test_old_api_key_rejected_after_rotation():
     (sync path used by the sync TestClient) rather than going
     through the ASGI dispatch path, so we mock it entirely.
     """
-    from app.auth import verify_api_key
+    import app.auth as auth_module
 
     old_key = "sk-old-adapter-rotation-key"
     new_key = "sk-new-adapter-rotation-key"
@@ -87,8 +87,8 @@ def test_old_api_key_rejected_after_rotation():
 
     # Pre-load the fake key store so old_key is also "known" (simulates
     # the key being in rotation before it was invalidated)
-    _FAKE_KEY_STORE[old_key] = user.id
-    _FAKE_KEY_STORE[new_key] = user.id
+    auth_module._FAKE_KEY_STORE[old_key] = user.id
+    auth_module._FAKE_KEY_STORE[new_key] = user.id
 
     try:
         client = TestClient(app)
@@ -101,7 +101,7 @@ def test_old_api_key_rejected_after_rotation():
         assert new_key_ok.status_code == 200
 
         # Simulate rotation: remove old key from store
-        _FAKE_KEY_STORE.pop(old_key, None)
+        auth_module._FAKE_KEY_STORE.pop(old_key, None)
 
         # Old key should now be rejected
         old_key_rejected = client.get(
@@ -112,10 +112,6 @@ def test_old_api_key_rejected_after_rotation():
             f"Expected old key to be rejected (401), got {old_key_rejected.status_code}"
         )
     finally:
-        _FAKE_KEY_STORE.pop(old_key, None)
-        _FAKE_KEY_STORE.pop(new_key, None)
+        auth_module._FAKE_KEY_STORE.pop(old_key, None)
+        auth_module._FAKE_KEY_STORE.pop(new_key, None)
         app.dependency_overrides.clear()
-
-
-# Module-level fake key store (mirrors what verify_api_key would check in prod)
-_FAKE_KEY_STORE: dict[str, str] = {}

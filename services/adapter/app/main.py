@@ -164,7 +164,7 @@ async def chat_completions(
         )
         raise HTTPException(
             status_code=502,
-            detail=f"Runtime execution failed: {str(e)}",
+            detail="Runtime execution failed",
         )
 
     if request.stream:
@@ -221,7 +221,7 @@ async def agent_run(
         )
         raise HTTPException(
             status_code=502,
-            detail=f"Agent run failed: {str(e)}",
+            detail="Agent run failed",
         )
 
     return result

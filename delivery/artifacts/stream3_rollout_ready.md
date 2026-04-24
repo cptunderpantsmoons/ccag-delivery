@@ -9,7 +9,7 @@ Status: AUDIT_COMPLETE_NOT_READY
 - `stream3_audit_report_2026-04-24.md`
 
 ## Blocking Items
-1. Adapter runtime import mismatch (P0).
-2. Security hardening items (P1) in adapter/vector-store/compose.
+1. Vector-store write/destructive endpoint authentication and scope enforcement.
+2. Production compose hardening for data-plane port exposure and default secret policy.
 
-// ASSUMPTION: rollout readiness remains blocked until P0 is resolved and P1 controls are implemented.
+// ASSUMPTION: rollout readiness remains blocked until remaining P1 controls are implemented and revalidated.

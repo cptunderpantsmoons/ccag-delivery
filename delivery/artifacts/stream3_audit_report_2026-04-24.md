@@ -86,8 +86,22 @@ Rollout-readiness audit for:
 
 ## Rollout Readiness Verdict
 - Current verdict: **NOT rollout-ready**.
-- Blocking condition: P0 unresolved in adapter runtime.
-- High-priority hardening required: P1 items above.
+- Blocking conditions: remaining P1 hardening items.
+- High-priority hardening required: vector-store auth boundary and compose network/secret tightening.
+
+## Remediation Update (2026-04-24, Wave 1)
+- Resolved:
+  1. P0 adapter runtime import/export mismatch fixed (`services/adapter/app/runtime/__init__.py`).
+  2. API error-detail leakage reduced in adapter and vector-store handlers.
+  3. Adapter auth rotation behavior corrected when fake-store mode is active.
+  4. Vector-store test harness stabilized (`pytest.ini`, test import shim).
+- Verification:
+  - `services/adapter`: `85 passed`
+  - `services/orchestrator`: `180 passed`
+  - `services/vector-store`: `4 passed`
+- Still open:
+  1. Vector-store write/destructive endpoint authentication.
+  2. Compose exposure/default-secret hardening for production posture.
 
 ## Remediation Sequence (Execution Order)
 1. Fix P0 adapter runtime export/import mismatch.
