@@ -27,11 +27,24 @@ docker compose ps
 ### Smoke Checks
 
 ```bash
-curl -fsS http://localhost:8000/readyz
+# Backend health
+curl -fsS http://localhost:8002/health
+curl -fsS http://localhost:8002/readyz
+curl -fsS http://localhost:8001/health
 curl -fsS http://localhost:8001/readyz
+curl -fsS http://localhost:8000/health
+
+# Frontend health
+curl -fsS http://localhost:3000/health
 curl -fsS http://localhost:3002/api/health
-curl -fsS http://localhost:3000 > /dev/null
-docker compose logs --tail=200 orchestrator adapter vector-store
+curl -fsS http://localhost:3003/health
+
+# CCAG Workspace (Bun server)
+curl -fsS http://localhost:3100/health
+
+# Aggregated smoke
+docker compose ps
+docker compose logs --tail=200 orchestrator adapter postgres
 ```
 
 ### Upgrade
@@ -114,5 +127,22 @@ docker compose logs -f orchestrator
 docker compose logs -f adapter
 docker compose logs -f vector-store
 docker compose logs -f contract-hub
+docker compose logs -f dashboard
+docker compose logs -f ccag-workspace
+docker compose logs -f ccag-workspace-ui
 ```
+
+## 7. Full-Stack Service Map
+
+| Service | Port | Health | Purpose |
+|---------|------|--------|---------|
+| postgres | 5432 | `pg_isready` | All databases |
+| redis | 6379 | `redis-cli ping` | Session/state cache |
+| orchestrator | 8002 | `/health`, `/readyz` | User mgmt, Clerk webhooks, RAG gateway |
+| adapter | 8001 | `/health`, `/readyz` | LLM inference proxy (pydantic-ai) |
+| vector-store | 8000 | `/health`, `/readyz` | ChromaDB embeddings |
+| dashboard | 3000 | `/` | Intelligence Hub frontend |
+| contract-hub | 3002 | `/api/health` | LawVu replacement — contracts, matters, docs |
+| ccag-workspace | 3100 | `/health` | OpenCode Engine API (Bun/Hono) |
+| ccag-workspace-ui | 3003 | `/` | Agent workspace React UI (static nginx) |
 

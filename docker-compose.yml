@@ -3,7 +3,7 @@
 # Flat services/ structure — no ../ escapes in build contexts
 
 services:
-  # ── Data layer ──────────────────────────────────────────────────────────────
+  # ── Data layer ────────────────────────────────────────────────────────────────
   postgres:
     build:
       context: ./services/postgres
@@ -81,21 +81,19 @@ services:
     environment:
       - DATABASE_URL=${ORCHESTRATOR_DATABASE_URL:-postgresql+asyncpg://ccag:${POSTGRES_PASSWORD}@postgres:5432/carbon_platform}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - RATE_LIMIT_STORAGE_URI=${RATE_LIMIT_STORAGE_URI:-redis://redis:6379/0}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
       - CLERK_FRONTEND_API_URL=${CLERK_FRONTEND_API_URL}
       - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
       - CLERK_JWT_ISSUER=${CLERK_JWT_ISSUER}
       - RAG_FIXED_TENANT_ID=${RAG_FIXED_TENANT_ID:-default}
+      - VECTOR_STORE_URL=http://vector-store:8000
       - VECTOR_STORE_INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
-      - DOCKER_ENABLED=${DOCKER_ENABLED:-false}
-      - AGENT_API_URL=${AGENT_API_URL:-http://adapter:8000}
-      - LLM_BASE_URL=${LLM_BASE_URL:-http://adapter:8000}
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
-      - LLM_API_KEY=${LLM_API_KEY}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
       - AUTO_CREATE_TABLES=${AUTO_CREATE_TABLES:-false}
+      - DOCKER_ENABLED=${DOCKER_ENABLED:-false}
+      - CCAG_SERVER_V2_URL=http://ccag-workspace:3100
     ports:
       - "127.0.0.1:8002:8000"
     healthcheck:
@@ -124,9 +122,13 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL}
       - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
-      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
       - DEFAULT_LIFETIME_HOURS=${DEFAULT_LIFETIME_HOURS:-24}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DGX_SPARK_1_URL=${DGX_SPARK_1_URL}
+      - DGX_SPARK_2_URL=${DGX_SPARK_2_URL}
     ports:
       - "8001:8000"
     healthcheck:
@@ -139,37 +141,41 @@ services:
       - ccag-net
 
   # ── Frontend: Intelligence Hub Dashboard ────────────────────────────────────
-  # dashboard:
-  #   build:
-  #     context: ./services/dashboard
-  #     dockerfile: Dockerfile
-  #   container_name: ccag-dashboard
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - orchestrator
-  #     - adapter
-  #   environment:
-  #     - NODE_ENV=production
-  #     - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-  #     - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-  #     - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-  #     - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-  #     - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-  #     - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
-  #     - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
-  #     - ADAPTER_URL=${ADAPTER_URL:-http://adapter:8000}
-  #     - CONTRACT_HUB_URL=${CONTRACT_HUB_URL:-http://contract-hub:3000}
-  #     - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-  #   ports:
-  #     - "127.0.0.1:3000:3000"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3000"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 30s
-  #   networks:
-  #     - ccag-net
+  dashboard:
+    build:
+      context: ./services/dashboard
+      dockerfile: Dockerfile
+    container_name: ccag-dashboard
+    restart: unless-stopped
+    depends_on:
+      orchestrator:
+        condition: service_started
+      adapter:
+        condition: service_started
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+      - ADAPTER_URL=http://adapter:8000
+      - CONTRACT_HUB_URL=http://contract-hub:3000
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - CCAG_SERVER_V2_URL=http://ccag-workspace:3100
+      - CCAG_TOKEN=${CCAG_TOKEN}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ccag-net
 
   # ── Frontend: Contract Hub (full-spec LawVu replacement) ────────────────────
   contract-hub:
@@ -191,12 +197,22 @@ services:
       - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
       - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-      - RAG_GATEWAY_URL=${RAG_GATEWAY_URL:-http://orchestrator:8000}
-      - VECTOR_STORE_URL=${VECTOR_STORE_URL:-http://vector-store:8000}
+      - CARBON_RAG_BASE_URL=http://orchestrator:8000
+      - VECTOR_STORE_URL=http://vector-store:8000
       - INNGEST_EVENT_KEY=${INNGEST_EVENT_KEY:-local}
       - INNGEST_SIGNING_KEY=${INNGEST_SIGNING_KEY:-local}
+      # Optional integrations
+      - AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
+      - AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
+      - AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
+      - SHAREPOINT_SITE_ID=${SHAREPOINT_SITE_ID}
+      - SHAREPOINT_LIBRARY_ID=${SHAREPOINT_LIBRARY_ID}
+      - DOCASSEMBLE_URL=${DOCASSEMBLE_URL}
+      - DOCASSEMBLE_API_KEY=${DOCASSEMBLE_API_KEY}
+      - OPENCODE_SERVER_URL=${OPENCODE_SERVER_URL}
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY}
     ports:
-      - "127.0.0.1:3002:3000"
+      - "3002:3000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health 2>/dev/null | grep -q ok || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
       interval: 30s
@@ -206,52 +222,65 @@ services:
     networks:
       - ccag-net
 
-  # ── OpenWork / CCAG Workspace — OpenCode Engine ─────────────────────────────
-  # ccag-workspace:
-  #   build:
-  #     context: ./services/openwork
-  #     dockerfile: Dockerfile.server-v2
-  #   container_name: ccag-workspace
-  #   restart: unless-stopped
-  #   environment:
-  #     - CCAG_DATA_DIR=/data/ccag-workspace
-  #     - CCAG_APPROVAL_MODE=${CCAG_APPROVAL_MODE:-manual}
-  #     - CCAG_TOKEN=${CCAG_TOKEN}
-  #     - CCAG_HOST_TOKEN=${CCAG_HOST_TOKEN}
-  #   volumes:
-  #     - ccag_workspace_data:/data
-  #   ports:
-  #     - "3100:3100"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "bun -e 'fetch(\"http://localhost:3100/health\").then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))'"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 15s
-  #   networks:
-  #     - ccag-net
+  # ── CCAG Workspace — OpenCode Engine (server-v2) ────────────────────────────
+  ccag-workspace:
+    build:
+      context: ./services/openwork
+      dockerfile: apps/server-v2/Dockerfile.server-v2
+    container_name: ccag-workspace
+    restart: unless-stopped
+    environment:
+      - CCAG_SERVER_V2_HOST=0.0.0.0
+      - CCAG_SERVER_V2_PORT=3100
+      - CCAG_SERVER_V2_HOSTING_KIND=self_hosted
+      - CCAG_TOKEN=${CCAG_TOKEN}
+      - CCAG_HOST_TOKEN=${CCAG_HOST_TOKEN}
+      # Auth — shared Clerk credentials
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_FRONTEND_API_URL=${CLERK_FRONTEND_API_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-${INTERNAL_API_TOKEN}}
+      - BETTER_AUTH_URL=${CLERK_FRONTEND_API_URL}
+      - DEN_BETTER_AUTH_TRUSTED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      # Storage directory (persistent volume)
+      - CCAG_DATA_DIR=/data/ccag-workspace
+      - CCAG_APPROVAL_MODE=${CCAG_APPROVAL_MODE:-manual}
+    volumes:
+      - ccag_workspace_data:/data
+    expose:
+      - "3100"
+    healthcheck:
+      test: ["CMD-SHELL", "bun -e 'fetch(\"http://localhost:3100/health\").then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ccag-net
 
-  # ── OpenWork / CCAG Workspace UI — Agent Workspace Frontend ─────────────────
-  # ccag-workspace-ui:
-  #   build:
-  #     context: ./services/openwork
-  #     dockerfile: Dockerfile.app
-  #   container_name: ccag-workspace-ui
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - ccag-workspace
-  #   environment:
-  #     - CCAG_PUBLIC_HOST=${CCAG_PUBLIC_HOST:-localhost}
-  #   ports:
-  #     - "3003:3000"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 30s
-  #   networks:
-  #     - ccag-net
+  # ── CCAG Workspace UI — Agent Workspace Frontend ───────────────────────────
+  ccag-workspace-ui:
+    build:
+      context: ./services/openwork
+      dockerfile: apps/server-v2/Dockerfile.app
+    container_name: ccag-workspace-ui
+    restart: unless-stopped
+    depends_on:
+      ccag-workspace:
+        condition: service_started
+    environment:
+      - CCAG_PUBLIC_HOST=${CCAG_PUBLIC_HOST:-localhost}
+      - CCAG_SERVER_V2_URL=http://ccag-workspace:3100
+    ports:
+      - "3003:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/ > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ccag-net
 
 volumes:
   postgres_data:

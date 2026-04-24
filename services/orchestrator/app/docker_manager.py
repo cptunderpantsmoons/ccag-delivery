@@ -189,3 +189,8 @@ class DockerServiceManager:
             return container.status
         except Exception:
             return "missing"
+
+    # ── Provisioning status helpers ─────────────────────────────────────────
+    def is_enabled(self) -> bool:
+        """Return whether Docker provisioning is active."""
+        return self._enabled
