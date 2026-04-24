@@ -9,6 +9,13 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --legacy-peer-deps
 
+# Provide stub Clerk key at build time so ClerkProvider doesn't throw on page generation.
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_build_placeholder
+ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+ENV NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
+ENV NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
+
 # Copy source
 COPY . .
 
