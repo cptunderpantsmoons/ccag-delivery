@@ -23,14 +23,10 @@ COPY . .
 # Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build (environment stubs – real values injected at runtime)
-ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_build_placeholder
-ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-ENV NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
-ENV NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
-ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
-
+# Build.
+# SafeProviders skips ClerkProvider when NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set,
+# allowing the Docker build to succeed without a real Clerk key.
+# At runtime, set the real NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY in docker-compose.yml.
 RUN npm run build
 
 # ── Stage 3: runner ───────────────────────────────────────────────────────────

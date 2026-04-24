@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
+import { SafeProviders } from '@/app/components/providers';
 import { ToastProvider } from '@/components/ui/toast';
 import { ThemeProvider } from '@/lib/theme/provider';
 import './globals.css';
@@ -28,13 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-[100dvh] flex flex-col bg-[var(--background)] text-[var(--text-primary)]">
-        <ClerkProvider>
+        <SafeProviders>
           <ThemeProvider defaultMode="system">
             <ToastProvider>
               {children}
             </ToastProvider>
           </ThemeProvider>
-        </ClerkProvider>
+        </SafeProviders>
       </body>
     </html>
   );
