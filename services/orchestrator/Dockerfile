@@ -18,12 +18,9 @@ COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 
-# Create non-root user and add to docker group (GID 999) so it can reach
-# /var/run/docker.sock without running as root. The host docker socket is
-# mounted :ro in production; the GID must match the host docker group.
+# Create non-root user
 RUN groupadd -r appuser \
-    && groupadd -g 999 docker 2>/dev/null || true \
-    && useradd -r -g appuser -G docker -d /app -s /sbin/nologin appuser \
+    && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
