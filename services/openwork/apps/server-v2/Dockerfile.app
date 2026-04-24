@@ -2,12 +2,12 @@
 # Multi-stage build: install workspace deps → build packages → build app → serve
 # Uses pnpm workspaces for @ccag/types and @ccag/ui package deps
 
-# Stage 1: deps
-FROM oven/bun:1.2-slim AS deps
+# Stage 1: build using node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm globally
+# Install pnpm globally (node:20 has npm)
 RUN npm install -g pnpm@10.27.0
 
 # Copy workspace root config
@@ -40,7 +40,7 @@ RUN pnpm --filter @ccag/app build
 FROM nginx:alpine
 
 # Copy built app to nginx
-COPY --from=deps /app/apps/app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/app/dist /usr/share/nginx/html
 
 # SPA routing + health endpoint
 RUN echo 'server { \
