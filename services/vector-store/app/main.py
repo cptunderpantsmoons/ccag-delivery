@@ -1,6 +1,6 @@
 """Vector store API service."""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import structlog
@@ -43,6 +43,32 @@ class DeleteRequest(BaseModel):
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "vector-store"}
+
+
+@app.get("/readyz")
+async def readyz(response: Response):
+    """Readiness endpoint with vector backend check."""
+    ready = False
+    total_documents = None
+
+    try:
+        stats = store.get_stats()
+        total_documents = stats.get("total_documents")
+        ready = isinstance(total_documents, int)
+    except Exception as exc:
+        logger.warning("readiness_check_failed", error=str(exc))
+
+    if not ready:
+        response.status_code = 503
+
+    return {
+        "status": "ready" if ready else "not_ready",
+        "service": "vector-store",
+        "components": {
+            "collection": ready,
+        },
+        "total_documents": total_documents,
+    }
 
 
 @app.get("/stats")

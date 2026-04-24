@@ -49,6 +49,19 @@ def test_health_endpoint_no_lifespan():
     assert response.json()["status"] == "healthy"
 
 
+def test_ready_endpoint_exists():
+    """Test /readyz endpoint shape."""
+    from app.main import app
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/readyz")
+    assert response.status_code in [200, 503]
+    payload = response.json()
+    assert payload["status"] in ["ready", "not_ready"]
+    assert payload["service"] == "orchestrator"
+    assert "components" in payload
+
+
 def test_admin_health_requires_auth(app_no_lifespan):
     """Test that admin endpoints require Authorization header."""
     client = TestClient(app_no_lifespan, raise_server_exceptions=False)

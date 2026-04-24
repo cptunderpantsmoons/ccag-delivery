@@ -1,13 +1,14 @@
 """Orchestrator API - main FastAPI application."""
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from sqlalchemy import text
 
-from app.database import get_session, init_db, create_tables
+from app.database import get_session, init_db, create_tables, create_session
 from app.admin import admin_router
 from app.users import user_router
 from app.clerk import clerk_webhook_router
@@ -92,6 +93,7 @@ async def lifespan(app: FastAPI):
     scheduler = get_scheduler()
     await scheduler.start()
 
+    app.state.startup_complete = True
     logger.info("orchestrator_started")
     yield
 
@@ -100,6 +102,7 @@ async def lifespan(app: FastAPI):
 
     # Stop session manager cleanup task
     await session_manager.stop_cleanup_task()
+    app.state.startup_complete = False
     logger.info("orchestrator_stopped")
 
 
@@ -135,6 +138,7 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+app.state.startup_complete = False
 
 app.add_middleware(
     CORSMiddleware,
@@ -175,6 +179,40 @@ app.include_router(internal_policy_router)
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "orchestrator"}
+
+
+@app.get("/readyz")
+async def readyz(response: Response):
+    """Readiness probe used by orchestrators and k8s."""
+    scheduler = get_scheduler()
+    session_manager = get_session_manager()
+    cleanup_task = getattr(session_manager, "_cleanup_task", None)
+
+    components = {
+        "startup": bool(getattr(app.state, "startup_complete", False)),
+        "scheduler": scheduler.is_running(),
+        "session_cleanup": bool(cleanup_task and not cleanup_task.done()),
+        "database": False,
+    }
+
+    db = create_session()
+    try:
+        await db.execute(text("SELECT 1"))
+        components["database"] = True
+    except Exception as exc:
+        logger.warning("readiness_database_check_failed", error=str(exc))
+    finally:
+        await db.close()
+
+    ready = all(components.values())
+    if not ready:
+        response.status_code = 503
+
+    return {
+        "status": "ready" if ready else "not_ready",
+        "service": "orchestrator",
+        "components": components,
+    }
 
 
 # Metrics endpoint for Prometheus scraping

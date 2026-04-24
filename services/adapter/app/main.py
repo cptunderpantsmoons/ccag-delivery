@@ -7,9 +7,10 @@ Provides:
 """
 
 import uuid
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Response
 from fastapi.responses import StreamingResponse
 import structlog
+from sqlalchemy import text
 
 from app.schemas import (
     ChatCompletionRequest,
@@ -22,6 +23,7 @@ from app.config import get_settings
 from app.auth import verify_api_key
 from app.models import User, UserStatus
 from app.metrics import RequestIDMiddleware, metrics_endpoint
+from app.database import async_session_factory
 
 # New pydantic-ai runtime
 from app.runtime import (
@@ -42,6 +44,34 @@ app.add_middleware(RequestIDMiddleware)
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "carbon-agent-adapter"}
+
+
+@app.get("/readyz")
+async def readyz(response: Response):
+    """Readiness endpoint with dependency checks."""
+    settings = get_settings()
+    config_ok = bool(settings.llm_provider and settings.llm_model_name)
+    database_ok = False
+
+    try:
+        async with async_session_factory() as session:
+            await session.execute(text("SELECT 1"))
+        database_ok = True
+    except Exception as exc:
+        logger.warning("readiness_database_check_failed", error=str(exc))
+
+    ready = config_ok and database_ok
+    if not ready:
+        response.status_code = 503
+
+    return {
+        "status": "ready" if ready else "not_ready",
+        "service": "carbon-agent-adapter",
+        "components": {
+            "config": config_ok,
+            "database": database_ok,
+        },
+    }
 
 
 # Metrics endpoint for Prometheus scraping

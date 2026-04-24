@@ -15,6 +15,15 @@ def test_health():
     assert response.json()["status"] == "healthy"
 
 
+def test_readyz():
+    response = client.get("/readyz")
+    assert response.status_code in [200, 503]
+    body = response.json()
+    assert body["status"] in ["ready", "not_ready"]
+    assert body["service"] == "carbon-agent-adapter"
+    assert "components" in body
+
+
 def test_chat_completions_preserves_openai_request_fields():
     """Test the OpenAI bridge forwards model and generation settings."""
     from app.runtime.responses import AgentExecutionResult, TokenUsage
