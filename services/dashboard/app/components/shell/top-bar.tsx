@@ -44,7 +44,7 @@ export function TopBar({
         </div>
         <div className="h-6 w-px bg-[var(--border)] hidden sm:block" />
         <ThemeToggle compact />
-        <AuthUserButton
+        <AuthUserButton />
       </div>
     </header>
   );
