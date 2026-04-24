@@ -1,6 +1,6 @@
 """Vector store API service."""
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Header, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import structlog
@@ -40,6 +40,17 @@ class DeleteRequest(BaseModel):
     where_filter: Dict
 
 
+def verify_internal_token(x_internal_token: Optional[str] = Header(default=None)):
+    """Gate internal API routes when INTERNAL_API_TOKEN is configured."""
+    expected = settings.internal_api_token.strip()
+    if not expected:
+        return
+
+    if x_internal_token != expected:
+        logger.warning("internal_token_auth_failed")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "vector-store"}
@@ -72,13 +83,15 @@ async def readyz(response: Response):
 
 
 @app.get("/stats")
-async def stats():
+async def stats(_: None = Depends(verify_internal_token)):
     """Get vector store statistics."""
     return store.get_stats()
 
 
 @app.post("/stats")
-async def scoped_stats(request: ScopedStatsRequest):
+async def scoped_stats(
+    request: ScopedStatsRequest, _: None = Depends(verify_internal_token)
+):
     """Get scoped vector store statistics."""
     try:
         return store.get_stats(where_filter=request.where_filter)
@@ -88,7 +101,9 @@ async def scoped_stats(request: ScopedStatsRequest):
 
 
 @app.post("/add")
-async def add_documents(request: AddDocumentsRequest):
+async def add_documents(
+    request: AddDocumentsRequest, _: None = Depends(verify_internal_token)
+):
     """Add documents to the vector store."""
     try:
         texts = [doc.text for doc in request.documents]
@@ -106,7 +121,7 @@ async def add_documents(request: AddDocumentsRequest):
 
 
 @app.post("/search")
-async def search(request: SearchRequest):
+async def search(request: SearchRequest, _: None = Depends(verify_internal_token)):
     """Search the vector store."""
     try:
         results = store.search(
@@ -121,7 +136,7 @@ async def search(request: SearchRequest):
 
 
 @app.post("/delete")
-async def delete_documents(request: DeleteRequest):
+async def delete_documents(request: DeleteRequest, _: None = Depends(verify_internal_token)):
     """Delete only documents matching the provided metadata filter."""
     try:
         deleted = store.delete_documents(where_filter=request.where_filter)
@@ -134,7 +149,7 @@ async def delete_documents(request: DeleteRequest):
 
 
 @app.post("/clear")
-async def clear():
+async def clear(_: None = Depends(verify_internal_token)):
     """Clear all documents from the vector store."""
     try:
         store.clear()

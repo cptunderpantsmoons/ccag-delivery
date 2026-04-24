@@ -7,6 +7,7 @@
     - adapter: 85 passed
     - orchestrator: 180 passed
     - vector-store: 4 passed
+  - Compose/network and auth hardening implemented and revalidated against test suites.
 - Heuristic decisions:
   - Severity ranking and remediation sequencing (P0/P1/P2).
 - Contract-mandated decisions:

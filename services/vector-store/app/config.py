@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # Collection name
     collection_name: str = os.getenv("COLLECTION_NAME", "carbon_documents")
 
+    # Optional service-to-service auth token. When set, mutating/search routes
+    # require callers to provide matching `x-internal-token`.
+    internal_api_token: str = os.getenv("INTERNAL_API_TOKEN", "")
+
     # Chunking settings (if needed)
     chunk_size: int = 1000
     chunk_overlap: int = 200

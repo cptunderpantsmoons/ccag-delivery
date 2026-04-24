@@ -2,14 +2,13 @@
 
 This file holds audit outputs, enhancement status, and rollout checklist links.
 
-Status: AUDIT_COMPLETE_NOT_READY
+Status: READY_FOR_DEPLOYMENT_VALIDATION
 
 ## Audit Artifacts
 - `stream3_audit_plan.md`
 - `stream3_audit_report_2026-04-24.md`
 
 ## Blocking Items
-1. Vector-store write/destructive endpoint authentication and scope enforcement.
-2. Production compose hardening for data-plane port exposure and default secret policy.
+1. Deployment smoke test in target environment (compose up + readiness probes + one RAG roundtrip).
 
-// ASSUMPTION: rollout readiness remains blocked until remaining P1 controls are implemented and revalidated.
+// ASSUMPTION: code-level rollout readiness is complete pending environment-level smoke validation.

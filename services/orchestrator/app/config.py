@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     # RAG gateway
     rag_fixed_tenant_id: str = ""
     vector_store_url: str = "http://vector-store:8000"
+    vector_store_internal_api_token: str = ""
 
     # CORS
     cors_allowed_origins: str = ""  # Comma-separated. REQUIRED in production.

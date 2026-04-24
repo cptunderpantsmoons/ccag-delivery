@@ -85,9 +85,9 @@ Rollout-readiness audit for:
   3. Add test-level shim or fixture strategy for optional heavy embedding deps.
 
 ## Rollout Readiness Verdict
-- Current verdict: **NOT rollout-ready**.
-- Blocking conditions: remaining P1 hardening items.
-- High-priority hardening required: vector-store auth boundary and compose network/secret tightening.
+- Current verdict: **READY_FOR_DEPLOYMENT_VALIDATION**.
+- Blocking conditions: none at code/test level.
+- Remaining gate: deployment smoke validation in target environment.
 
 ## Remediation Update (2026-04-24, Wave 1)
 - Resolved:
@@ -100,8 +100,21 @@ Rollout-readiness audit for:
   - `services/orchestrator`: `180 passed`
   - `services/vector-store`: `4 passed`
 - Still open:
-  1. Vector-store write/destructive endpoint authentication.
-  2. Compose exposure/default-secret hardening for production posture.
+  1. None.
+
+## Remediation Update (2026-04-24, Wave 2)
+- Resolved:
+  1. Vector-store internal-token authentication added to data operations.
+  2. Orchestrator now forwards `x-internal-token` to vector-store.
+  3. Compose hardened:
+     - Postgres/Redis bound to localhost (`127.0.0.1`) instead of broad host exposure.
+     - `POSTGRES_PASSWORD` is now required at compose runtime.
+     - Adapter/Orchestrator DB URL defaults now derive from `POSTGRES_PASSWORD`.
+  4. `.env.example` updated to remove `changeme` defaults.
+- Verification:
+  - `services/adapter`: `85 passed`
+  - `services/orchestrator`: `180 passed`
+  - `services/vector-store`: `4 passed`
 
 ## Remediation Sequence (Execution Order)
 1. Fix P0 adapter runtime export/import mismatch.

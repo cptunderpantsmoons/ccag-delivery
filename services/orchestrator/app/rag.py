@@ -111,12 +111,19 @@ async def _proxy_scoped_vector_store_request(
 ) -> dict[str, Any]:
     """Proxy a scoped request to the vector-store service."""
     settings = get_settings()
+    headers: dict[str, str] = {}
+    if settings.vector_store_internal_api_token:
+        headers["x-internal-token"] = settings.vector_store_internal_api_token
 
     try:
         async with httpx.AsyncClient(
             base_url=settings.vector_store_url, timeout=10.0
         ) as client:
-            response = await client.post(path, json=upstream_payload)
+            response = await client.post(
+                path,
+                json=upstream_payload,
+                headers=headers or None,
+            )
     except httpx.RequestError as exc:
         raise HTTPException(
             status_code=503, detail="Vector store service unavailable"
