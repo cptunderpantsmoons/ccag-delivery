@@ -139,37 +139,37 @@ services:
       - ccag-net
 
   # ── Frontend: Intelligence Hub Dashboard ────────────────────────────────────
-  dashboard:
-    build:
-      context: ./services/dashboard
-      dockerfile: Dockerfile
-    container_name: ccag-dashboard
-    restart: unless-stopped
-    depends_on:
-      - orchestrator
-      - adapter
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
-      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
-      - ADAPTER_URL=${ADAPTER_URL:-http://adapter:8000}
-      - CONTRACT_HUB_URL=${CONTRACT_HUB_URL:-http://contract-hub:3000}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    ports:
-      - "127.0.0.1:3000:3000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - ccag-net
+  # dashboard:
+  #   build:
+  #     context: ./services/dashboard
+  #     dockerfile: Dockerfile
+  #   container_name: ccag-dashboard
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - orchestrator
+  #     - adapter
+  #   environment:
+  #     - NODE_ENV=production
+  #     - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+  #     - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+  #     - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+  #     - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+  #     - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+  #     - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+  #     - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8000}
+  #     - ADAPTER_URL=${ADAPTER_URL:-http://adapter:8000}
+  #     - CONTRACT_HUB_URL=${CONTRACT_HUB_URL:-http://contract-hub:3000}
+  #     - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+  #   ports:
+  #     - "127.0.0.1:3000:3000"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3000"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   networks:
+  #     - ccag-net
 
   # ── Frontend: Contract Hub (full-spec LawVu replacement) ────────────────────
   contract-hub:
